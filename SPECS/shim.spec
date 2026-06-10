@@ -18,7 +18,9 @@ Source1: BOOTX64.CSV
 Patch0: ignore-mm-missing.patch
 Patch1: 0001-pe-Fix-PF-in-GRUB-after-memattrs-call.patch
 
-BuildRequires: xssign-macros
+BuildRequires: xcpsign-macros-test
+BuildRequires: sbsigntools
+BuildRequires: gcc
 Requires: certwrapper
 Conflicts: grub <= 2.12-5
 
@@ -45,27 +47,17 @@ This package contains the dev-signed version.
 %autosetup -p1
 
 %build
-%fetchcert -c SHIM_EMBEDDED_SIGN_KEY_XS9 -o pub.cer
+%fetchcert -c SHIM_EMBEDDED_SIGN_KEY_XCP9 -o pub.cer
 grep -q shim.xs data/sbat.csv ||
     echo 'shim.xs,1,Cloud Software Group,shim,%{version}-%{release},mailto:security@xenserver.com' >> data/sbat.csv
 make POST_PROCESS_PE_FLAGS=-n VENDOR_CERT_FILE=pub.cer IGNORE_MM_MISSING=1
 
-if [ "%{_is_development_build}" = "true" ]; then
-    KEY_SUFFIX=
-else
-    KEY_SUFFIX=_TMP
-fi
-%sign -c SHIM_SIGN_KEY_XS9${KEY_SUFFIX} -i shimx64.efi -o shimx64-signed.efi
-%sign -c SHIM_EMBEDDED_SIGN_KEY_XS9 -i fbx64.efi -o fbx64-signed.efi
-%sign -c SHIM_EMBEDDED_SIGN_KEY_XS9 -i mmx64.efi -o mmx64-signed.efi
+%sign -c SHIM_SIGN_KEY_XCP9 -i shimx64.efi -o shimx64-signed.efi
+%sign -c SHIM_EMBEDDED_SIGN_KEY_XCP9 -i fbx64.efi -o fbx64-signed.efi
+%sign -c SHIM_EMBEDDED_SIGN_KEY_XCP9 -i mmx64.efi -o mmx64-signed.efi
 
 %check
-if [ "%{_is_development_build}" = "true" ]; then
-    KEY_SUFFIX=
-else
-    KEY_SUFFIX=_TMP
-fi
-%fetchcert -c SHIM_SIGN_KEY_XS9${KEY_SUFFIX} -o shim_sign_key.cer
+%fetchcert -c SHIM_SIGN_KEY_XCP9 -o shim_sign_key.cer
 pesigcheck -c shim_sign_key.cer -n 0 -i shimx64-signed.efi
 
 %install
@@ -91,6 +83,9 @@ cp fbx64-signed.efi %{buildroot}/boot/efi/EFI/BOOT/fbx64.efi
 /boot/efi/EFI/xenserver/mmx64.efi
 
 %changelog
+* Wed Jun 10 2026 Corentin Oparowski <corentin.oparowski@vates.tech> - 16.1-5
+- change certs and deps to test with xcp-ng
+
 * Thu Oct 09 2025 Ross Lagerwall <ross.lagerwall@citrix.com> - 16.1-4
 - Fix key usage in %check
 
