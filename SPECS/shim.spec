@@ -11,7 +11,7 @@
 Summary: First-stage UEFI bootloader
 Name: shim
 Version: 16.1
-Release: %{?xsrel}%{?dist}
+Release: %{?xsrel}~secureboot.1%{?dist}
 License: BSD
 Source0: shim-16.1.tar.bz2
 Source1: BOOTX64.CSV
